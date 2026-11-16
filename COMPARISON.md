@@ -1,19 +1,19 @@
-# 一个有边界的优势：保留同 SKU 的两个费率版本
+# A Narrow Workflow Difference: Preserve Two Rate Versions for One SKU
 
-对照项目：[jhalzel/Amazon-Seller-Profit-Calculator](https://github.com/jhalzel/Amazon-Seller-Profit-Calculator)，固定提交 `5bd15f42ed092351817363ac2de6138a6db64996`。2026-11-16 查看其[Profits.js](https://github.com/jhalzel/Amazon-Seller-Profit-Calculator/blob/5bd15f42ed092351817363ac2de6138a6db64996/src/pages/home/Profits.js)。
+Baseline: [jhalzel/Amazon-Seller-Profit-Calculator](https://github.com/jhalzel/Amazon-Seller-Profit-Calculator), fixed commit `5bd15f42ed092351817363ac2de6138a6db64996`. Its [Profits.js](https://github.com/jhalzel/Amazon-Seller-Profit-Calculator/blob/5bd15f42ed092351817363ac2de6138a6db64996/src/pages/home/Profits.js) was reviewed on 2026-11-16.
 
-## 同一场景
+## The same task
 
-商品 SAME-ASIN，售价25、成本10、100件、库龄200天、每件0.1立方英尺。基准与新版本均15%佣金及体积仓储0.5/立方英尺，基准每件固定仓储1、对比1.2；基准履约4、库龄附加0.2，对比履约7、库龄附加0.3。
+Product `SAME-ASIN`: price 25, cost 10, 100 units, inventory age 200 days, volume 0.1 cubic feet per unit. Both scenarios use a 15% referral rate and volume storage of 0.5 per cubic foot. Baseline fixed storage is 1 per unit versus 1.2 in the comparison. Baseline fulfillment is 4 and age surcharge 0.2; comparison fulfillment is 7 and age surcharge 0.3. The age surcharge is applicable in this fixture.
 
-用户要同时保留旧、新两套输入，比较差值，关闭后恢复并重新核算。
+The user wants to preserve both complete input sets, compare the difference, close the tool, then restore and recalculate.
 
-- 本项目实测：两个版本均保留在可恢复项目文件中；基准净额600，对比净额270，总差值−330（美元）。结果来自自编确定性用例，不代表真实Amazon费率。
-- 对照项目**源码检查**：提交一个ASIN的新结果时，先遍历已有记录并删除同ASIN结果，再新增结果；其保存对象为本次合计结果，没有并存的基准/对比费率输入。
-- 因此，在“同一SKU保留两份完整费率输入并离线恢复比较”的指定工作流，本项目提供了该固定版本保存逻辑没有的路径。对照项目仍可由用户手工建立不同ASIN标签或在外部记录数据；这不是它算术错误的证据。
+- **Our executed result:** both versions remain in the recoverable project. Baseline net amount is 600; comparison is 270; total difference is -330 USD. These are fictional deterministic inputs, not real Amazon rates.
+- **Competitor source inspection:** saving a new result for an ASIN iterates through existing records, removes results with that ASIN, then adds the new result. The saved object contains the current aggregate result, not coexisting baseline/comparison rate inputs.
+- For the specific workflow of retaining and restoring two complete rate sets for the same SKU, this tool supplies a path absent from that fixed version's save logic. A user of the competing tool could still use distinct ASIN labels or external records. This is not evidence of an arithmetic error in that tool.
 
-## 证据边界
+## Evidence limits
 
-本项目运行了往返恢复、净额计算及差值回归测试。对方只固定版本读取代码，未安装、执行完整React/Firebase应用，也未计时比较点击次数。不声称整体更强、算术更准确、速度更快或市场唯一。若要求两个完整应用同场景浏览器横测，目前尚未完成。
+Our restore round trip, net amounts, and differences were tested internally. The competitor was inspected at a fixed source version; its complete React/Firebase application was not installed or run. Click counts and speed were not benchmarked. We do not claim stronger overall functionality, greater arithmetic accuracy, faster execution, or market uniqueness. A complete two-application browser comparison has not been performed.
 
-它支持FBA/FBM及云端记录；本项目只做用户提供费率的本地双情景，不提供FBM或云端同步。所有功能的价值仍需实际用户验证。
+The competing tool supports FBA/FBM and cloud records. This project is limited to two local scenarios with user-supplied rates; it does not provide FBM support or cloud synchronization. Practical value still needs validation with real users.

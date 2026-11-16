@@ -1,48 +1,87 @@
-# 逐 SKU 费用情景比较
+# FBA Fee Scenarios
 
-实验性 v0.2，MIT，中文零依赖离线工具。**费率全部手填，演示非官方费率。不是税务、投资或经营建议。**
+An experimental v0.2, dependency-free, offline tool for comparing two fee scenarios per SKU. The application interface remains in Simplified Chinese. MIT licensed.
 
-## 本地启动
-下载整个仓库 ZIP 并解压。在含有 `index.html` 的目录打开终端，使用已安装的 Python 3 启动仅监听本机的静态服务器：
+**All rates are entered manually. Sample rates are fictional, not official Amazon fees. This is not tax, investment, or business advice.**
+
+## Start locally
+
+Download the complete repository ZIP and extract it. Open a terminal in the directory containing `index.html`. With Python 3 installed, start a loopback-only static server:
 
 ```sh
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Windows 若使用 Python Launcher，可改为：
+On Windows with Python Launcher:
 
 ```powershell
 py -3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-在浏览器打开 `http://127.0.0.1:8000`。用完在终端按 Ctrl+C 停止。服务器仅提供本目录静态文件，不要在含有私人文件的上层目录运行。无需 API、密钥或付费服务；Python 仅用于本地提供页面。
+Open `http://127.0.0.1:8000` in your browser. Stop the server with Ctrl+C. Serve only this project directory, not a parent directory containing private files. No API, key, or paid service is required; Python only serves the local page.
 
-直接双击 `index.html` 的 `file:///` 方式尚未验证，因此这里不保证可用。
+Directly opening `index.html` with `file:///` has not been verified and is not guaranteed here.
 
-## 使用流程
-首次打开即显示空白录入表单。可直接填写；想先体验则点“加载虚构示例”，再点“生成情景对比”。“新建空白项目”会清除当前未保存内容，请先保存。直接修改生成的字段表单、增删记录后重新校验；高级JSON可粘贴后点“应用JSON到表单”；可下载JSON报告。无需API、账号或密钥，无外部资源或后台。页面关闭即丢弃未保存输入。点击“保存可恢复项目”下载含完整输入的项目文件；以后用“恢复本地项目文件”加载。项目文件与只读报告不同，后者不能恢复；两者都可能包含经营资料，请自行妥善保管。
+## Workflow
 
-## 输入格式
-currency 是3位大写币种，volumeUnit 必须为 cubic_ft 或 cubic_m。所有仓储体积费率必须与该单位一致，工具不换算。scenarios 恰好两项，各含唯一 name、真实 date 生效日期、validUntil 有效截止日期、verifiedAt 人工核验日期、periodDays（1至366整数天）计费周期、source 来源说明。顶层 asOfDate 是用户指定的分析日期，核验日不能晚于分析日。日期只用来提示尚未生效/已过期，不替用户验证官方费率，不预测未来库龄；两情景周期不同会警告，不能直接将差值解释为同周期变化。
+The first page provides a blank form. Enter your data directly, or load the fictional example and generate a comparison. Creating a new blank project replaces unsaved content, so save first.
 
-skus 包含唯一 sku、price 售价、cost 成本、整数 units 件数、整数 ageDays 库龄、volumePerUnit 每件体积。每SKU必须提供两项 rates，与情景顺序对应，各含 referralPct（0至99.99百分比）、fulfillment 履约费/件、storagePerUnit 非体积固定仓储分摊/件、storagePerVolume 仓储费/体积单位/指定周期、otherPerUnit 其他费/件、agedThresholdDays 库龄阈值、agedPerUnit 达到阈值附加费/件。所有数值非负。费用须已由用户折算到相同周期并按每售出件分摊，不可重复计入。
+Edit the generated fields, add or remove records, then validate again. Advanced users can paste JSON and apply it to the form. Download a JSON report, or save a **recoverable project** containing the complete inputs. Restore that project from a local file later. A read-only report cannot restore editing.
 
+No account, API key, external assets, or backend is involved. Closing the page discards unsaved input. Both projects and reports may contain business information; keep them secure.
 
-表单结果提供可读表格，同时保留完整JSON。最多500条记录、文本字段300字符、网页输入500000字符；可恢复项目文件的保存与恢复统一限制为500000 UTF-8字节（中文通常占多个字节，保存前检查完整格式化文件大小）。错误时拒绝生成报告，不悄悄补零或猜测。
-参考 `sample.json`；其数据全部自编，不是真实客户资料。JSON中的标签只作为文本显示。
+## Input schema and limits
 
-## 算法及范围
-体积仓储费/件=volumePerUnit×storagePerVolume。库龄附加费/件=库龄达到阈值时的 agedPerUnit，否则0。每件费用=售价×佣金百分比/100+履约+固定仓储分摊+体积仓储+其他+库龄附加费。每件净额=售价−成本−每件费用；总净额=每件净额×件数；保本价=(成本+各固定费用)/(1−佣金百分比/100)。
+- `currency`: a three-letter uppercase currency code.
+- `volumeUnit`: `cubic_ft` or `cubic_m`. Every volume-based storage rate must use that same unit; the tool does not convert units.
+- `scenarios`: exactly two entries, each with a unique `name`, valid effective `date`, `validUntil`, manual verification date `verifiedAt`, billing-period length `periodDays` (integer 1-366), and `source` description.
+- `asOfDate`: your analysis date. Verification dates cannot be later than it.
 
-这是**逐SKU自填费率情景算术**，不是自动官方费率体检。两个情景使用同一用户库龄，假定所有件数售出且分摊不变，不自动处理历史库存批次、复杂库龄阶梯、体积等级、月度库存、税、退货或汇率。内部使用浮点计算，表格金额展示两位小数、JSON报告最多六位小数；可恢复项目保留输入原值，需人工核算，不用于正式结算。
+Dates only flag rates that are not yet effective or are expired. They do not validate official fees or project future inventory age. Different scenario periods generate a warning: their difference must not be interpreted as a same-period change.
 
-## 验证
-内部自动测试 68 项通过，覆盖计算、异常输入、保存恢复、中文 UTF-8 文件大小边界、导入竞态和界面状态；其中 DOM 模拟与静态 CSS 检查不是浏览器验收。公开发布包不包含测试脚本或专用测试夹具。
+Each `skus` entry requires a unique `sku`, selling `price`, `cost`, integer `units`, integer inventory age `ageDays`, and `volumePerUnit`. Each SKU has two `rates` entries in scenario order:
 
-已在云电脑真实 Chromium 通过下载解压后 localhost 进行手工录入、两费率计算、保存恢复、下载和 400px 窄屏验收。`file:///` 方式及其他浏览器未验证；400px 是浏览器窄屏测试，不是实体手机验收。
+| Field | Meaning |
+| --- | --- |
+| `referralPct` | Referral percentage, 0-99.99 |
+| `fulfillment` | Fulfillment fee per unit |
+| `storagePerUnit` | Fixed, non-volume storage allocation per unit |
+| `storagePerVolume` | Storage fee per volume unit for the specified period |
+| `otherPerUnit` | Other fees per unit |
+| `agedThresholdDays` | Inventory-age threshold |
+| `agedPerUnit` | Additional per-unit charge at or above that threshold |
 
-## 开源比较
-见 `COMPARISON.md`。不声称全面优于现有开源方案，不提供盈利或效果保证。
+All numeric values must be nonnegative. You must convert fees to the intended period and allocate them per sold unit without double counting.
 
-## 隐私与贡献
-代码不请求网络，不自动读取文件系统或持久化；只读取用户明确选中的项目文件，和用户主动下载。请勿将敏感资料提交到公开Issue。贡献前充分自测，勿加入追踪、付费接口或密钥需求。漏洞/错误请用脱敏最小样例说明。原型未经专业认证。
+Results include a readable table and full JSON. Limits: 500 records, 300 characters per text field, 500,000 characters of page input, and **500,000 UTF-8 bytes** for both saving and restoring a project. The complete formatted project's byte size is checked before saving; non-ASCII characters may use multiple bytes. Invalid input blocks the report rather than silently inserting zeroes or guessing values.
+
+See `sample.json`. All example data is fictional, not customer data. JSON labels are rendered as text.
+
+## Formulas and scope
+
+- Volume storage fee per unit = `volumePerUnit * storagePerVolume`.
+- Inventory-age surcharge per unit = `agedPerUnit` when age reaches the threshold; otherwise zero.
+- Fees per unit = selling price times referral percentage / 100, plus fulfillment, fixed storage allocation, volume storage, other fees, and the age surcharge.
+- Net amount per unit = selling price minus cost minus fees.
+- Total net amount = net amount per unit times units.
+- Break-even price = (cost plus fixed fees) / (1 - referral percentage / 100).
+
+This is **arithmetic on user-supplied per-SKU fee scenarios**, not an automatic official-fee audit. Both scenarios use the same supplied inventory age. All units are assumed sold with unchanged allocation. Historical inventory batches, complex age tiers, size classes, monthly inventory accounting, taxes, returns, and exchange rates are not modeled.
+
+Calculations use floating point. Tables display two decimals; JSON reports display at most six. Recoverable projects preserve original inputs. Check the calculations manually; do not use them as settlement records.
+
+## Verification
+
+**68 internal automated tests passed**, covering calculations, invalid input, backup/restore, UTF-8 file-size boundaries, import races, and UI state. DOM simulation and static CSS checks are not real-browser acceptance. The public package contains no test scripts or dedicated test fixtures.
+
+A downloaded and extracted copy was tested in real Chromium on the cloud computer over localhost: manual entry, two-rate calculations, save/restore, real downloads, and a 400 px narrow layout. `file:///` and other browsers remain unverified. A narrow browser window is not a physical-phone test.
+
+## Comparison
+
+See [COMPARISON.md](COMPARISON.md) for the fixed-version comparison and its evidence limits. No claim of overall superiority, profitability, or guaranteed results is made.
+
+## Privacy, contributions, and license
+
+The code makes no network requests, automatically reads no filesystem data, and does not persist data automatically. It reads only project files you explicitly select, and downloads are user-triggered. Do not put sensitive records in public issues. Report bugs with a redacted minimal example. Contributions should be tested and must not introduce tracking, paid endpoints, or required keys.
+
+This prototype has no professional certification. MIT; see [LICENSE](LICENSE).
